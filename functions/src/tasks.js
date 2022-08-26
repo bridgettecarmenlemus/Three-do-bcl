@@ -1,22 +1,33 @@
-import { dbConnect } from "./dbConnect.js";
+import  dbConnect  from "./dbConnect.js";
 
-export async function getTasks(req, res) {
+export async function getTasks(req, res) { // we are going to later add by user ID to this . . .
   const db = dbConnect();
   const collection = await db
     .collection("tasks")
     .get()
-    .catch((err) => res.status(500).send(err));
-  const tasks = collection.docs.map((doc) => {
-    let task = doc.data();
+    .catch(err => res.status(500).send(err));
+  const tasks = collection.docs.map((doc) => { // from line 9 to 12 we are looping through every document in the collection 
+    let task = doc.data(); // all the info we have in that document 
     task.id = doc.id;
     return task;
   });
   res.send(tasks);
 }
-export function createTask(req, res) {
+
+export async function createTask(req, res) { // later we will add the user id and the timestamp 
   const newTask = req.body;
-  res.status(201).send("Task Added");
+  if (!newTask || !newTask.task) {
+    res.status(400).send({ success: false, message: "Invalid Request "}) // CYA Cover Your Booty 
+    return;
+  }
+  const db = dbConnect();
+  await db.collection('tasks').add(newTask)
+  .catch (err => res.status(500).send(err))
+  //res.status(201).send("Task Added");
+  res.status(201);
+  getTasks(req, res); // so it saying to send back the full list of tasks . . t
 }
+
 export function updateTask(req, res) {
   const taskUpdate = req.body;
   const { taskId } = req.params;
