@@ -1,9 +1,21 @@
 import  dbConnect  from "./dbConnect.js";
+import jwt  from "jsonwebtoken";
+import { secretKey } from "../credentials.js";
 
-export async function getTasks(req, res) { // we are going to later add by user ID to this . . .
+export async function getTasks(req, res) {
+  const token = req.headers.authorization;
+  let newTask = req.body;
+  const user = jwt.verify(token, secretKey);
+  if (!newTask || !newTask.task || !user) {
+    res.status(400).send({ success: false, message: "Invalid Request"});
+    return;
+  }
+  newTask.userId = user.id;
+  // we are going to later add by user ID to this . . .
   const db = dbConnect();
-  const collection = await db
+  collection = await db
     .collection("tasks")
+    .where('userId', '==', user.id)
     .get()
     .catch(err => res.status(500).send(err));
   const tasks = collection.docs.map((doc) => { // from line 9 to 12 we are looping through every document in the collection 
